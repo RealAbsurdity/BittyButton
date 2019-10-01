@@ -1,0 +1,7 @@
+BittyButton	KEYWORD1
+attach		KEYWORD2
+refresh		KEYWORD2
+isDown		KEYWORD2
+isUp		KEYWORD2
+shortPush	KEYWORD2
+longPush	KEYWORD2
