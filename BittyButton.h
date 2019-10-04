@@ -1,13 +1,13 @@
 /*
    BittyButton.h - Arduino Library to easily use one or more bit-stream debounced momentary switch objects
    Created by Arnold Martin, August 28, 2019.
-   
+
    Based in part on Elliot Williams excellent article on debouncing noisy buttons:
    https://hackaday.com/2015/12/10/embed-with-elliot-debounce-your-noisy-buttons-part-ii/
 
    Released into the wild knowing this has been done at least 1.6 millions times...
    Attribuation, share-alike
-   
+
    V2
 
    Create an instance as usual with the constuctor, a pin number agument and an option for INPUT_PULLUP:
@@ -49,26 +49,27 @@
 #ifndef BittyButton_h
 #define BittyButton_h
 
-#define LONG_PUSH   2
-#define SHORT_PUSH  1
-#define NO_PUSH     0
-
 class BittyButton
 {
   public:
     BittyButton();
-    void attach(int pin);
-    int refresh(int threshold = 0);
+    void attach(int pin, int inputType = 0, int longPushTime = 0);
+    void refresh(void);
+    bool down();
+    bool up();
     bool isDown();
     bool isUp();
     bool shortPush;
     bool longPush;
+
   private:
-    bool down();
-    bool up();
     int _pin;
     int _threshold;
     uint16_t _buttonBits;
+    uint16_t _downMatch;
+    uint16_t _upMatch;
+    uint16_t _isDownMatch;
+    uint16_t _isUpMatch ;
     bool _buttonRead;
     unsigned long _timeStart;
     unsigned long _pushTime;
