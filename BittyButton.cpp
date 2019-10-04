@@ -50,16 +50,54 @@ BittyButton::BittyButton()
 {
 }
 
-void BittyButton::attach(int pin)
+void BittyButton::attach(int pin, int inputType, int longPushTime) //NEED TO ADD TWO ARGUMENTS: INPUT_PULLUP and LONG_PUSH_THRESHOLD
 {
   _pin = pin;
-  pinMode(_pin, INPUT_PULLUP);
+  if (longPushTime >= 500)
+  {
+    _threshold = longPushTime;
+  }
+  else
+  {
+    _threshold = 0;
+  }
+
+  if (inputType == INPUT_PULLUP)
+  {
+    pinMode(_pin, INPUT_PULLUP);
+  }
+  else
+  if (inputType == INPUT)
+  {
+    pinMode(_pin, INPUT);
+  }
+  else
+  if (inputType == INPUT_PULLDOWN)
+  {
+    pinMode(_pin, INPUT_PULLDOWN);
+  }
+
+  int temp = digitalRead(_pin);
+  // Serial.print("defaultPinRead = "); Serial.println(temp);
+  if (temp == 0)
+  {
+    _downMatch = 0B0111111111111111;
+    _upMatch = 0B1111111111111110;
+    _isDownMatch = 0B1111111111111111;
+    _isUpMatch = 0B0000000000000000;
+  }
+  else
+  if (temp == 1)
+  {
+    _downMatch = 0B1000000000000000;
+    _upMatch = 0B0000000000000001;
+    _isDownMatch = 0B0000000000000000;
+    _isUpMatch = 0B1111111111111111;
+  }
 }
 
-int BittyButton::refresh(int threshold)
+void BittyButton::refresh(void)
 {
-  _threshold = threshold;
-
   //read the button value into a local varible
   _buttonRead = digitalRead(_pin);
 
@@ -69,11 +107,12 @@ int BittyButton::refresh(int threshold)
 
   //write the button value into the open (rightmost) bit
   _buttonBits = _buttonBits | _buttonRead;
+  // Serial.println(_buttonBits);
 
   //needs a very quick delay (50 - 100 microseconds on UNO) to stabilize the buffer (too fast otherwise!)
   delayMicroseconds(100);
 
-  if (_threshold > 0) {
+  if (_threshold >= 500) {
     if (down() || isDown() || up()) {
 
       _pushTime = millis() - _timeStart;
@@ -83,38 +122,43 @@ int BittyButton::refresh(int threshold)
           shortPush = true;
           _pushed = false;
           _released = false;
-          return SHORT_PUSH;
+          return;
         }
         else if (_pushTime >= _threshold) {
           longPush = true;
           _pushed = false;
           _released = false;
-          return LONG_PUSH;
+          return;
         }
       }
-    } else {
+    }
+    else {
       shortPush = false;
       longPush = false;
-      return NO_PUSH;
+      return;
     }
   }
-  else if (_threshold == 0) {
+  else
+  {
     if (down()) {
       shortPush = true;
       _pushed = false;
       _released = false;
-      return SHORT_PUSH;
-    } else {
+      return;
+    }
+    else {
       shortPush = false;
       longPush = false;
-      return NO_PUSH;
+      return;
     }
   }
 }
 
 
-bool BittyButton::down() {
-  if (_buttonBits == 0B1000000000000000) {
+bool BittyButton::down()
+{
+  if (_buttonBits == _downMatch)
+  {
     _timeStart = millis();
     _pushed = true;
     _released = false;
@@ -125,8 +169,9 @@ bool BittyButton::down() {
   }
 }
 
-bool BittyButton::up() {
-  if (_buttonBits == 0B0000000000000001) {
+bool BittyButton::up()
+{
+  if (_buttonBits == _upMatch) {
     _released = true;
     return true;
   }
@@ -136,7 +181,7 @@ bool BittyButton::up() {
 }
 
 bool BittyButton::isDown() {
-  if (_buttonBits == 0B0000000000000000) {
+  if (_buttonBits == _isDownMatch) {
     return true;
   }
   else {
@@ -144,8 +189,9 @@ bool BittyButton::isDown() {
   }
 }
 
-bool BittyButton::isUp() {
-  if (_buttonBits == 0B1111111111111111) {
+bool BittyButton::isUp()
+{
+  if (_buttonBits == _isUpMatch) {
     return true;
   }
   else {
